@@ -1,0 +1,8 @@
+.idea/
+*.iml
+*.exe
+*.db
+*.dll
+*.so
+.DS_Store
+go_build_*
