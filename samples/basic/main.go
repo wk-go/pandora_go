@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	pandora "github.com/wk-go/pandora_go"
+	"log"
 	"os"
-	"time"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 
 	data, err := client.ModelsGET()
 	if err != nil {
-		fmt.Println(data)
+		fmt.Println(err)
 	}
 	fmt.Println(data)
 
@@ -41,7 +41,7 @@ func main() {
 		if conversation == nil || err != nil {
 			return
 		}
-		time.Sleep(20 * time.Second)
+		//time.Sleep(20 * time.Second)
 	} else {
 		conversation, err = client.ConversationGET(conversation.ID)
 		if err != nil {
@@ -49,13 +49,16 @@ func main() {
 		}
 	}
 
-	conversationID := conversation.ID
-	parentMessageID := conversation.CurrentNode
-	result, err := client.ConversationPostFinalResult(conversationID, parentMessageID, "conversation")
-	if err != nil {
-		return
+	wordList := []string{"conversation", "message", "result", "hello", "word"}
+	for _, word := range wordList {
+		result, err := client.ConversationPostFinalResult(conversation.ID, conversation.CurrentNode, word)
+		if err != nil {
+			return
+		}
+		log.Println("@@@@@@@@@@@@")
+		fmt.Println(result.Message.Content.Parts[0])
+		log.Println("############")
+		conversation.CurrentNode = result.Message.ID
+		//time.Sleep(20 * time.Second)
 	}
-	fmt.Println(result.Message.Content.Parts)
-
-	time.Sleep(20 * time.Second)
 }
