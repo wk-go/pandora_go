@@ -74,12 +74,12 @@ type TalkMessage struct {
 }
 
 type Model struct {
-	Slug                  string            `json:"slug"`
-	MaxTokens             int               `json:"max_tokens"`
-	Title                 string            `json:"title"`
-	Description           string            `json:"description"`
-	Tags                  []string          `json:"tags"`
-	QualitativeProperties map[string]string `json:"qualitative_properties"`
+	Slug                  string           `json:"slug"`
+	MaxTokens             int              `json:"max_tokens"`
+	Title                 string           `json:"title"`
+	Description           string           `json:"description"`
+	Tags                  []string         `json:"tags"`
+	QualitativeProperties map[string][]int `json:"qualitative_properties"`
 }
 
 type ModelList struct {
