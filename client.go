@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 const (
@@ -19,11 +20,12 @@ const (
 )
 
 type Client struct {
-	UrlPrefix string // http(s)://ip:port/api
-	Token     string
-	Proxy     *url.URL // protocol://user:pwd@ip:port
-	Model     string
-	Headers   map[string]string
+	UrlPrefix            string // http(s)://ip:port/api
+	Token                string
+	Proxy                *url.URL // protocol://user:pwd@ip:port
+	Model                string
+	Headers              map[string]string
+	LastConversationTime time.Time //最后一次发送会话时间
 }
 
 func NewClient(urlPrefix, token string) *Client {
@@ -242,6 +244,7 @@ func (c *Client) ConversationPOST(conversationID, parentMessageID, prompt string
 
 	content, _ = json.Marshal(message)
 
+	c.LastConversationTime = time.Now()
 	body, err := c.Request("POST", _url, c.Token, content)
 	if err != nil {
 		return nil, err
