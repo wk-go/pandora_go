@@ -163,6 +163,15 @@ func (c *Client) ConversationPostFinalResult(conversationID, parentMessageID, pr
 	if err != nil {
 		return nil, err
 	}
+
+	if len(bodySlice) < 3 {
+		errResp, err := NewErrorResponse(bodySlice[0])
+		if err != nil {
+			return nil, err
+		}
+		return nil, errResp
+	}
+
 	resultSlice := bytes.Replace(bodySlice[len(bodySlice)-3], []byte("data: "), nil, -1)
 	conversationPostResult := new(ConversationPostResult)
 	err = json.Unmarshal(resultSlice, conversationPostResult)
@@ -179,6 +188,15 @@ func (c *Client) ConversationPostListResult(conversationID, parentMessageID, pro
 	if err != nil {
 		return nil, err
 	}
+
+	if len(bodySlice) < 3 {
+		errResp, err := NewErrorResponse(bodySlice[0])
+		if err != nil {
+			return nil, err
+		}
+		return nil, errResp
+	}
+
 	resultSlice := make([]*ConversationPostResult, 0, len(bodySlice))
 	for _, s := range bodySlice {
 		if len(s) < 6 {

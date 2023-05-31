@@ -2,6 +2,7 @@ package pandora_go
 
 import (
 	"encoding/json"
+	"strings"
 )
 
 type ErrorInterface interface {
@@ -92,4 +93,16 @@ func (er *ErrorResponse) UnmarshalJSON(data []byte) (err error) {
 	}
 	er.Detail = detail
 	return
+}
+func (er *ErrorResponse) Error() string {
+	if er.Detail == nil {
+		return "ErrorResponse:no more detail"
+	}
+	switch er.Detail.GetType() {
+	case "string":
+		return er.Detail.GetMessage()
+	case "json":
+		return strings.Join([]string{er.Detail.GetType(), er.Detail.GetMessage()}, ":")
+	}
+	return ""
 }
