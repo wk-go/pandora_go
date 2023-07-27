@@ -219,7 +219,11 @@ func (c *Client) ConversationPostFinalResult(conversationID, parentMessageID, pr
 		return nil, errResp
 	}
 
-	resultSlice := bytes.Replace(bodySlice[len(bodySlice)-3], []byte("data: "), nil, -1)
+	resultOffset := 3
+	if len(bodySlice[len(bodySlice)-1]) == 0 {
+		resultOffset = 4
+	}
+	resultSlice := bytes.Replace(bodySlice[len(bodySlice)-resultOffset], []byte("data: "), nil, -1)
 	conversationPostResult := new(ConversationPostResult)
 	err = json.Unmarshal(resultSlice, conversationPostResult)
 	if err != nil {
