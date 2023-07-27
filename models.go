@@ -85,3 +85,12 @@ type Model struct {
 type ModelList struct {
 	Models []*Model `json:"models"`
 }
+
+type LoginResponse struct {
+	AccessToken  string `json:"access_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	IDToken      string `json:"id_token"`
+	RefreshToken string `json:"refresh_token"`
+	Scope        string `json:"scope"`
+	TokenType    string `json:"token_type"`
+}

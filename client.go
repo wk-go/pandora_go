@@ -26,6 +26,15 @@ type Client struct {
 	Model                string
 	Headers              map[string]string
 	LastConversationTime time.Time //最后一次发送会话时间
+	LoginResponse        *LoginResponse
+}
+
+func NewClientLogin(urlPrefix, Username, password string) (*Client, error) {
+	client := NewClient(urlPrefix, "")
+	if err := client.Login(Username, password, ""); err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 func NewClient(urlPrefix, token string) *Client {
@@ -50,6 +59,42 @@ func (c *Client) AddHeader(key, value string) {
 		c.Headers = make(map[string]string)
 	}
 	c.Headers[key] = value
+}
+
+// Login 登录
+func (c *Client) Login(username, password, mfaCode string) error {
+	_url := c.UrlPrefix + "/auth/login"
+
+	postData := url.Values{
+		"username": {username},
+		"password": {password},
+		"mfa_code": {mfaCode},
+	}
+
+	body, err := c.Request("POST", _url, "", []byte(postData.Encode()),
+		"Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+	if err != nil {
+		return err
+	}
+
+	loginResp := new(LoginResponse)
+	err = json.Unmarshal(body, loginResp)
+	if err != nil {
+		return err
+	}
+
+	if len(loginResp.AccessToken) == 0 {
+		if _err, err := NewErrorResponse(body); err != nil {
+			return err
+		} else {
+			return _err
+		}
+	}
+
+	c.LoginResponse = loginResp
+	c.Token = loginResp.AccessToken
+
+	return nil
 }
 
 // ModelsGET 模型列表
@@ -255,20 +300,13 @@ func (c *Client) ConversationPOST(conversationID, parentMessageID, prompt string
 
 // Request 发起请求
 func (c *Client) Request(method, url, token string, content []byte, headers ...string) ([]byte, error) {
-
-	client := &http.Client{}
-
-	if c.Proxy != nil {
-		client.Transport = &http.Transport{
-			Proxy: http.ProxyURL(c.Proxy),
-		}
-	}
-
 	var req *http.Request
 	var err error
 	req, err = http.NewRequest(method, url, bytes.NewBuffer(content))
 
-	req.Header.Add("authorization", "Bearer "+token)
+	if len(token) > 0 {
+		req.Header.Add("authorization", "Bearer "+token)
+	}
 	for k, v := range c.Headers {
 		req.Header.Add(k, v)
 	}
@@ -288,7 +326,7 @@ func (c *Client) Request(method, url, token string, content []byte, headers ...s
 		return nil, err
 	}
 
-	res, err := client.Do(req)
+	res, err := c.RequestDo(req)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -302,4 +340,23 @@ func (c *Client) Request(method, url, token string, content []byte, headers ...s
 	}
 
 	return body, nil
+}
+
+func (c *Client) RequestDo(req *http.Request) (*http.Response, error) {
+
+	client := &http.Client{}
+
+	if c.Proxy != nil {
+		client.Transport = &http.Transport{
+			Proxy: http.ProxyURL(c.Proxy),
+		}
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return resp, nil
 }
