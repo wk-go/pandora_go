@@ -63,7 +63,11 @@ func (c *Client) AddHeader(key, value string) {
 
 // Login 登录
 func (c *Client) Login(username, password, mfaCode string) error {
-	_url := c.UrlPrefix + "/auth/login"
+	urlPrefix := c.UrlPrefix
+	if strings.Contains(c.UrlPrefix, "/api") {
+		urlPrefix = strings.Replace(c.UrlPrefix, "/api", "", -1)
+	}
+	_url := urlPrefix + "/auth/login"
 
 	postData := url.Values{
 		"username": {username},

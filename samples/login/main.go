@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	pandora "github.com/wk-go/pandora_go"
 	"os"
@@ -40,5 +41,6 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(conversations)
+	data, _ := json.Marshal(conversations)
+	fmt.Println(string(data))
 }
