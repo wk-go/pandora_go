@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"io"
 	"net/http"
@@ -320,8 +319,6 @@ func (c *Client) Request(method, url, token string, content []byte, headers ...s
 		return nil, err
 	}
 
-	fmt.Println("1!!!!: ", bytes.Index(body, errorMessageFeature))
-
 	if bytes.Index(body, errorMessageFeature) != -1 {
 		err = UnmarshalResponseError(body)
 	}
@@ -341,7 +338,6 @@ func (c *Client) RequestDo(req *http.Request) (*http.Response, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
