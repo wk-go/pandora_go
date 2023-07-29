@@ -87,14 +87,6 @@ func (c *Client) Login(username, password, mfaCode string) error {
 		return err
 	}
 
-	if len(loginResp.AccessToken) == 0 {
-		if _err, err := NewErrorResponse(body); err != nil {
-			return err
-		} else {
-			return _err
-		}
-	}
-
 	c.LoginResponse = loginResp
 	c.Token = loginResp.AccessToken
 
@@ -129,6 +121,7 @@ func (c *Client) ConversationsGET() ([]*Conversation, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return conversationListResult.Items, nil
 }
 
@@ -215,14 +208,6 @@ func (c *Client) ConversationPostFinalResult(conversationID, parentMessageID, pr
 		return nil, err
 	}
 
-	if len(bodySlice) < 3 {
-		errResp, err := NewErrorResponse(bodySlice[0])
-		if err != nil {
-			return nil, err
-		}
-		return nil, errResp
-	}
-
 	resultOffset := 3
 	if len(bodySlice[len(bodySlice)-1]) == 0 {
 		resultOffset = 4
@@ -242,14 +227,6 @@ func (c *Client) ConversationPostListResult(conversationID, parentMessageID, pro
 	bodySlice, err := c.ConversationPOST(conversationID, parentMessageID, prompt)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(bodySlice) < 3 {
-		errResp, err := NewErrorResponse(bodySlice[0])
-		if err != nil {
-			return nil, err
-		}
-		return nil, errResp
 	}
 
 	resultSlice := make([]*ConversationPostResult, 0, len(bodySlice))
@@ -307,9 +284,8 @@ func (c *Client) ConversationPOST(conversationID, parentMessageID, prompt string
 }
 
 // Request 发起请求
-func (c *Client) Request(method, url, token string, content []byte, headers ...string) ([]byte, error) {
+func (c *Client) Request(method, url, token string, content []byte, headers ...string) (body []byte, err error) {
 	var req *http.Request
-	var err error
 	req, err = http.NewRequest(method, url, bytes.NewBuffer(content))
 
 	if len(token) > 0 {
@@ -330,24 +306,27 @@ func (c *Client) Request(method, url, token string, content []byte, headers ...s
 	}
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
 	res, err := c.RequestDo(req)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	body, err := io.ReadAll(res.Body)
+	body, err = io.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
-	return body, nil
+	fmt.Println("1!!!!: ", bytes.Index(body, errorMessageFeature))
+
+	if bytes.Index(body, errorMessageFeature) != -1 {
+		err = UnmarshalResponseError(body)
+	}
+
+	return body, err
 }
 
 func (c *Client) RequestDo(req *http.Request) (*http.Response, error) {

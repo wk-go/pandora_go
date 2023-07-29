@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
+	"errors"
 	"fmt"
 	pandora "github.com/wk-go/pandora_go"
 	"os"
@@ -33,8 +35,14 @@ func main() {
 
 	conversations, err := client.ConversationsGET()
 	if err != nil {
+		_err := new(pandora.ErrorResponse)
+		if errors.As(err, &_err) {
+			panic(_err)
+		}
 		panic(err)
 	}
+	conversationsJson, _ := json.Marshal(conversations)
+	fmt.Println("对话列表:", conversationsJson)
 
 	reader := bufio.NewReader(os.Stdin)
 
@@ -56,7 +64,7 @@ func main() {
 		}
 	}
 
-	fmt.Print("请输入您的第一句话：")
+	fmt.Print("请输入您的第一句话(默认:你好)：")
 	input, _ = reader.ReadString('\n')
 	if len(input) == 0 {
 		input = "你好"

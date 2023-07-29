@@ -2,14 +2,16 @@ package pandora_go
 
 import (
 	"encoding/json"
-	"strings"
 )
+
+var errorMessageFeature = []byte("{\"detail\":")
 
 type ErrorInterface interface {
 	GetType() string
 	GetCode() string
 	GetMessage() string
 	GetClearsIn() int
+	error
 }
 
 type ErrorJson struct {
@@ -33,6 +35,10 @@ func (e *ErrorJson) GetClearsIn() int {
 	return e.ClearsIn
 }
 
+func (e *ErrorJson) Error() string {
+	return e.Message
+}
+
 type ErrorString string
 
 func (e *ErrorString) GetType() string {
@@ -48,6 +54,10 @@ func (e *ErrorString) GetMessage() string {
 
 func (e *ErrorString) GetClearsIn() int {
 	return 0
+}
+
+func (e *ErrorString) Error() string {
+	return string(*e)
 }
 
 // ErrorResponse 错误响应
@@ -69,7 +79,22 @@ func NewErrorResponse(data ...[]byte) (result *ErrorResponse, err error) {
 	return result, nil
 }
 
-func (er *ErrorResponse) UnmarshalJSON(data []byte) (err error) {
+func UnmarshalResponseError(data []byte) error {
+	if len(data) == 0 {
+		return nil
+	}
+	_err, err := NewErrorResponse(data)
+	if err != nil {
+		return err
+	}
+
+	if len(_err.Detail.GetMessage()) == 0 {
+		return nil
+	}
+	return _err
+}
+
+func (e *ErrorResponse) UnmarshalJSON(data []byte) (err error) {
 	tmp := map[string]any{}
 	//result.Detail = ErrorJson{}
 	err = json.Unmarshal(data, &tmp)
@@ -91,18 +116,28 @@ func (er *ErrorResponse) UnmarshalJSON(data []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	er.Detail = detail
+	e.Detail = detail
 	return
 }
-func (er *ErrorResponse) Error() string {
-	if er.Detail == nil {
+
+func (e *ErrorResponse) GetType() string {
+	return e.Detail.GetType()
+}
+
+func (e *ErrorResponse) GetCode() string {
+	return e.Detail.GetCode()
+}
+func (e *ErrorResponse) GetMessage() string {
+	return e.Detail.GetCode()
+}
+
+func (e *ErrorResponse) GetClearsIn() int {
+	return 0
+}
+
+func (e *ErrorResponse) Error() string {
+	if e.Detail == nil {
 		return "ErrorResponse:no more detail"
 	}
-	switch er.Detail.GetType() {
-	case "string":
-		return er.Detail.GetMessage()
-	case "json":
-		return strings.Join([]string{er.Detail.GetType(), er.Detail.GetMessage()}, ":")
-	}
-	return ""
+	return e.Detail.Error()
 }
