@@ -20,6 +20,7 @@ const (
 
 type Client struct {
 	UrlPrefix            string // http(s)://ip:port/api
+	LoginUrl             string
 	Token                string
 	Proxy                *url.URL // protocol://user:pwd@ip:port
 	Model                string
@@ -62,11 +63,16 @@ func (c *Client) AddHeader(key, value string) {
 
 // Login 登录
 func (c *Client) Login(username, password, mfaCode string) error {
-	urlPrefix := c.UrlPrefix
-	if strings.Contains(c.UrlPrefix, "/api") {
-		urlPrefix = strings.Replace(c.UrlPrefix, "/api", "", -1)
+	var _url string
+	if len(c.LoginUrl) > 0 {
+		_url = c.LoginUrl
+	} else {
+		urlPrefix := c.UrlPrefix
+		if strings.Contains(c.UrlPrefix, "/api") {
+			urlPrefix = strings.Replace(c.UrlPrefix, "/api", "", -1)
+		}
+		_url = urlPrefix + "/auth/login"
 	}
-	_url := urlPrefix + "/auth/login"
 
 	postData := url.Values{
 		"username": {username},
